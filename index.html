@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>¿Quién dijo que…? — NotiNada</title>
+<style>
+:root{--ink:#171717;--burgundy:#761028;--blush:#f3e9ec;--grey:#f2f2f2;--line:#dedede;--paper:#fff}
+*{box-sizing:border-box}body{margin:0;background:var(--paper);color:var(--ink);font:16px/1.55 system-ui,-apple-system,Segoe UI,Roboto,sans-serif}
+.quiz{max-width:780px;margin:0 auto;padding:clamp(20px,5vw,54px)}
+.brand{font-size:.82rem;letter-spacing:.18em;font-weight:800;text-transform:uppercase;color:var(--burgundy);border-bottom:3px solid var(--burgundy);padding-bottom:10px}
+h1{font-family:Georgia,serif;font-size:clamp(2rem,6vw,3.3rem);line-height:1.04;margin:24px 0 12px;letter-spacing:-.03em}
+.intro{font-size:1.08rem;color:#444;margin:0 0 24px}.note{font-size:.9rem;color:#555;background:var(--grey);padding:12px 15px;margin-bottom:26px}
+.progress-wrap{display:flex;justify-content:space-between;font-size:.84rem;font-weight:700;margin-bottom:8px}.progress{height:8px;background:#e8e8e8;border-radius:20px;overflow:hidden;margin-bottom:26px}.bar{height:100%;width:0;background:var(--burgundy);transition:width .25s}
+.question{font-family:Georgia,serif;font-size:1.35rem;font-weight:700;margin:0 0 18px}.choices{display:grid;gap:12px}.choice{width:100%;text-align:left;background:#fff;border:1.5px solid var(--line);border-radius:8px;padding:15px 16px;font:inherit;cursor:pointer;transition:background .15s,border .15s,transform .15s}.choice:hover{border-color:var(--burgundy);transform:translateY(-1px)}.choice.selected{border:2px solid var(--burgundy);background:var(--blush);font-weight:650}.choice:focus-visible,.btn:focus-visible{outline:3px solid #b66b7d;outline-offset:3px}
+.controls{display:flex;justify-content:space-between;gap:12px;margin-top:24px}.btn{border:0;border-radius:4px;padding:12px 20px;font-weight:750;font-size:.95rem;cursor:pointer}.btn-primary{background:var(--burgundy);color:#fff}.btn-secondary{background:var(--grey);color:var(--ink)}.btn:disabled{opacity:.42;cursor:not-allowed}
+.hidden{display:none!important}.result{padding:24px;background:var(--blush);border-left:5px solid var(--burgundy)}.score{font:700 2.8rem Georgia,serif;color:var(--burgundy;margin:0 0 8px}.result h2{font:700 1.65rem Georgia,serif;margin:0 0 10px}.result p{margin:0 0 12px}.footer{border-top:1px solid var(--line);margin-top:32px;padding-top:14px;font-size:.78rem;color:#666;letter-spacing:.04em}
+@media(max-width:480px){.quiz{padding:22px 16px}.controls .btn{padding:11px 15px}.question{font-size:1.2rem}}
+</style>
+</head>
+<body>
+<main class="quiz" id="quiz">
+  <div class="brand">NotiNada · Cuestionario de dudosa autoridad</div>
+  <h1>¿Quién dijo que…?</h1>
+  <p class="intro">Diez frases. Dos posibles autores. Una cantidad de información que nadie ha solicitado. ¿Puedes distinguir quién dijo qué?</p>
+  <p class="note">Marca tus respuestas y suma puntos. No consultes fuentes: probablemente empeorarían el resultado.</p>
+  <section id="quizArea">
+    <div class="progress-wrap"><span id="progressText">Pregunta 1 de 10</span><span id="answeredText">0/10 respondidas</span></div>
+    <div class="progress" aria-hidden="true"><div class="bar" id="progressBar"></div></div>
+    <div id="questionText" class="question"></div>
+    <div id="choices" class="choices"></div>
+    <div class="controls"><button class="btn btn-secondary" id="prevBtn" type="button">Anterior</button><button class="btn btn-primary" id="nextBtn" type="button" disabled>Siguiente</button></div>
+  </section>
+  <section id="resultArea" class="hidden" aria-live="polite"></section>
+  <div class="footer">NOTINADA · INFORMACIÓN QUE NO CAMBIARÁ TU VIDA</div>
+</main>
+<script>
+(() => {
+  const questions = [
+    {quote:'“¿Sabías que si comes demasiado pavo… gluglú, gluglú, gluglú?”', options:['Bert','Albert Einstein'], correct:0},
+    {quote:'“Siempre he dicho que si nos encontramos con extraterrestres, no deberíamos luchar contra ellos, sino amarlos. Eso sí, solo a los machos. Pero no soy gay.”', options:['Gregory McGregorson','Tú (lector/a)'], correct:1},
+    {quote:'“Un hombre sin pantalones no teme a los carteristas.”', options:['Sun Tzu','Mondo Dongo'], correct:0},
+    {quote:'“¿Quieres ver un cementerio de pájaros? Métete debajo de un molino alguna vez. Es tristísimo: hay pájaros de todo tipo.”', options:['Axe3y7','Donald Trump'], correct:1},
+    {quote:'“Eep ba bi mape epe eie”', options:['Donald Trump','Elon Musk'], correct:0},
+    {quote:'“Está claro que los pájaros son espías. ¿Los has visto? Tienen ojos y pueden volar. ¿Qué más puede hacer eso? Los drones.”', options:['Eki','Leonardo da Vinci'], correct:0},
+    {quote:'“En serio, no soy gay.”', options:['Tú, otra vez','Napoleon Bonaparte'], correct:0},
+    {quote:'“Banana.”', options:['Minion','Popopopopopop'], correct:0},
+    {quote:'“El Gobierno ha confirmado que la Luna no está hecha de queso. La investigación sobre si está hecha de mozzarella ligeramente decepcionante continúa abierta.”', options:['Churro','Isaac Newton'], correct:0},
+    {quote:'“No me fío de las escaleras. Siempre están tramando algo.”', options:['Mondo Dongo','William Shakespeare'], correct:0}
+  ];
+  let current=0; const answers=Array(questions.length).fill(null);
+  const qText=document.getElementById('questionText'), choices=document.getElementById('choices'), prev=document.getElementById('prevBtn'), next=document.getElementById('nextBtn');
+  function render(){const q=questions[current];document.getElementById('progressText').textContent=`Pregunta ${current+1} de ${questions.length}`;document.getElementById('answeredText').textContent=`${answers.filter(v=>v!==null).length}/${questions.length} respondidas`;document.getElementById('progressBar').style.width=`${((current+1)/questions.length)*100}%`;qText.textContent=q.quote;choices.innerHTML='';q.options.forEach((opt,i)=>{const b=document.createElement('button');b.type='button';b.className='choice'+(answers[current]===i?' selected':'');b.textContent=opt;b.setAttribute('aria-pressed',answers[current]===i?'true':'false');b.addEventListener('click',()=>{answers[current]=i;render();});choices.appendChild(b)});prev.disabled=current===0;next.textContent=current===questions.length-1?'Ver resultado':'Siguiente';next.disabled=answers[current]===null;}
+  prev.addEventListener('click',()=>{if(current>0){current--;render()}});
+  next.addEventListener('click',()=>{if(answers[current]===null)return;if(current<questions.length-1){current++;render()}else showResult()});
+  function showResult(){const score=answers.reduce((sum,a,i)=>sum+(a===questions[i].correct?1:0),0);let title,desc;if(score<=2){title='No tienes ni idea';desc='Lo preocupante es que probablemente estés convencido de que sí.'}else if(score<=5){title='Ciudadano confundido';desc='La información te llega, pero no siempre se queda.'}else if(score<=8){title='Investigador independiente';desc='Independiente de la realidad, principalmente.'}else if(score===9){title='Periodista de investigación';desc='Nos gustaría comprobar tus fuentes, pero nos da miedo.'}else{title='Oráculo nacional';desc='No sabemos si eres brillante o si has participado en la redacción de las preguntas.'}
+    document.getElementById('quizArea').classList.add('hidden');const res=document.getElementById('resultArea');res.classList.remove('hidden');res.innerHTML=`<div class="result"><p class="score">${score}/10</p><h2>${title}</h2><p>${desc}</p><p>Gracias por participar en esta evaluación de dudosa utilidad pública.</p><button class="btn btn-primary" id="restartBtn" type="button">Volver a intentarlo</button></div>`;document.getElementById('restartBtn').addEventListener('click',()=>{answers.fill(null);current=0;res.classList.add('hidden');document.getElementById('quizArea').classList.remove('hidden');render()});}
+  render();
+})();
+</script>
+</body>
+</html>
